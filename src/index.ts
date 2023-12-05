@@ -7,11 +7,11 @@ import { Role, User } from "./types";
 const JWT_SECRET = process.env["JWT_SECRET"] as string;
 const PORT = (process.env["PORT"] as string) || "1337";
 
-const decodeToken = (token: string | undefined): User | undefined => {
+const decodeUser = (token: string | undefined): User | undefined => {
   if (!token) return undefined;
   let user = undefined;
   jwt.verify(token, JWT_SECRET, (err, result) => {
-    if (!err) user = result as User;
+    if (!err && result) user = result as User;
   });
   return user;
 };
@@ -25,7 +25,7 @@ async function main() {
   const limiter = rateLimit({
     max: (req: Request) => {
       const token = req.headers["authorization"]?.split(" ")[1];
-      const user = decodeToken(token);
+      const user = decodeUser(token);
       if (user?.rateLimit) return user.rateLimit;
       if (user?.roles.includes(Role.ADMIN)) return 1000;
       if (user?.roles.includes(Role.BASIC)) return 300;
